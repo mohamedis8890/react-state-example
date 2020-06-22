@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useReducer } from "react";
 import "./styles.css";
 import { v4 as uuidV4 } from "uuid";
 
@@ -20,9 +20,41 @@ const initalTodos = [
   }
 ];
 
+const filterReducer = (state, action) => {
+  switch (action.type) {
+    case "SHOW_ALL":
+      return "ALL";
+
+    case "SHOW_COMPLETE":
+      return "COMPLETE";
+
+    case "SHOW_INCOMPLETE":
+      return "INCOMPLETE";
+    default:
+      throw new Error();
+  }
+};
+
 export default function App() {
   const [todos, setTodos] = useState(initalTodos);
   const [task, setTask] = useState("");
+
+  const [filter, dispatchFilter] = useReducer(filterReducer, "ALL");
+
+  const filteredTodos = todos.filter(todo => {
+    if (filter === "ALL") {
+      return true;
+    }
+
+    if (filter === "COMPLETE" && todo.complete) {
+      return true;
+    }
+
+    if (filter === "INCOMPLETE" && !todo.complete) {
+      return true;
+    }
+    return false;
+  });
 
   const handleChangeCheckbox = id => {
     setTodos(
@@ -49,10 +81,32 @@ export default function App() {
 
     event.preventDefault();
   };
+
+  const handleShowAll = () => {
+    dispatchFilter({ type: "SHOW_ALL" });
+  };
+  const handleShowComplete = () => {
+    dispatchFilter({ type: "SHOW_COMPLETE" });
+  };
+  const handleShowIncomplete = () => {
+    dispatchFilter({ type: "SHOW_INCOMPLETE" });
+  };
+
   return (
     <div>
+      <div>
+        <button type="button" onClick={handleShowAll}>
+          Show All
+        </button>
+        <button type="button" onClick={handleShowComplete}>
+          Show Complete
+        </button>
+        <button type="button" onClick={handleShowIncomplete}>
+          Show Incomplete
+        </button>
+      </div>
       <ul>
-        {todos.map(todo => (
+        {filteredTodos.map(todo => (
           <li key={todo.id}>
             <label>
               <input
