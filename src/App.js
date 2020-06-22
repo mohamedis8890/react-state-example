@@ -35,10 +35,42 @@ const filterReducer = (state, action) => {
   }
 };
 
+const todoReducer = (state, action) => {
+  switch (action.type) {
+    case "DO_TODO":
+      return state.map(todo => {
+        if (todo.id === action.id) {
+          return { ...todo, complete: true };
+        } else {
+          return todo;
+        }
+      });
+
+    case "UNDO_TODO":
+      return state.map(todo => {
+        if (todo.id === action.id) {
+          return { ...todo, complete: false };
+        } else {
+          return todo;
+        }
+      });
+
+    case "ADD_TODO":
+      return state.concat({
+        task: action.task,
+        id: action.id,
+        complete: false
+      });
+
+    default:
+      throw new Error();
+  }
+};
+
 export default function App() {
-  const [todos, setTodos] = useState(initalTodos);
   const [task, setTask] = useState("");
 
+  const [todos, dispatchTodos] = useReducer(todoReducer, initalTodos);
   const [filter, dispatchFilter] = useReducer(filterReducer, "ALL");
 
   const filteredTodos = todos.filter(todo => {
@@ -56,16 +88,11 @@ export default function App() {
     return false;
   });
 
-  const handleChangeCheckbox = id => {
-    setTodos(
-      todos.map(todo => {
-        if (todo.id === id) {
-          return { ...todo, complete: !todo.complete };
-        } else {
-          return todo;
-        }
-      })
-    );
+  const handleChangeCheckbox = todo => {
+    dispatchTodos({
+      type: todo.complete ? "UNDO_TODO" : "DO_TODO",
+      id: todo.id
+    });
   };
 
   const handleChangeInput = event => {
@@ -74,7 +101,7 @@ export default function App() {
 
   const handleSubmit = event => {
     if (task) {
-      setTodos(todos.concat({ id: uuidV4(), task, complete: false }));
+      dispatchTodos({ type: "ADD_TODO", task, id: uuidV4() });
     }
 
     setTask("");
@@ -112,7 +139,7 @@ export default function App() {
               <input
                 type="checkbox"
                 checked={todo.complete}
-                onChange={() => handleChangeCheckbox(todo.id)}
+                onChange={() => handleChangeCheckbox(todo)}
               />
               {todo.task}
             </label>
